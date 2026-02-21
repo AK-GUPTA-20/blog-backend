@@ -1,0 +1,78 @@
+# ==============================
+
+# Blog-Backend .gitignore
+
+# ==============================
+
+# Node Modules
+
+node_modules/
+
+# Environment Variables
+
+.env
+.env.*
+
+# Logs
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage Directory (Jest)
+
+coverage/
+
+# Build / Dist
+
+build/
+dist/
+
+# OS Files
+
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Optional npm cache directory
+
+.npm/
+
+# Optional eslint cache
+
+.eslintcache
+
+# Temporary files
+
+*.tmp
+*.temp
+
+# ImageKit uploads (if stored locally)
+
+uploads/
+
+# Test environment files
+
+.env.test
+
+# Lock files (optional - keep if needed)
+
+# package-lock.json
+
+# yarn.lock
