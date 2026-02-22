@@ -12,7 +12,7 @@ const authRoutes = require("./routes/auth.routes");
 const postRoutes = require("./routes/post.routes");
 
 const app = express();
-
+app.set("trust proxy", 1);
 
 
 // Helmet - Security headers
@@ -40,6 +40,11 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+//  Body Parser 
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser());
+
 // Apply general rate limiting to all API routes
 app.use("/api/", limiter);
 
@@ -52,11 +57,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-//  Body Parser 
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cookieParser());
 
 
 // Development logging
