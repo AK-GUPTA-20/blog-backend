@@ -102,7 +102,7 @@ const register = catchAsyncError(async (req, res, next) => {
     password,
     avatar: avatar || "",
     bio: bio || "",
-    isVerified: false,   
+    isVerified: true,   
   });
 
   return sendToken(user, 201, "Registration successful.", res);
