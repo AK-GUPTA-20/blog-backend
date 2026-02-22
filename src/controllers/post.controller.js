@@ -2,9 +2,9 @@ const Post = require("../models/Post.model");
 const ErrorHandler = require("../middlewares/error");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const slugify = require("slugify");
+const User = require("../models/User.model");
 
 //*  create a new post
-
 exports.createPost = catchAsyncError(async (req, res, next) => {
   const { title, content, tags } = req.body;
 
@@ -30,10 +30,12 @@ exports.createPost = catchAsyncError(async (req, res, next) => {
     publishedAt: new Date(),
   });
 
-   
+  // Update user's totalPosts count
+  await User.findByIdAndUpdate(
     req.user.id,
     { $inc: { totalPosts: 1 } },
-    { new: true };
+    { new: true }
+  );
 
   res.status(201).json({
     success: true,
@@ -257,10 +259,12 @@ exports.deletePost = catchAsyncError(async (req, res, next) => {
 
   await post.deleteOne();
 
-   // Decrease user's post count
-  
+  // Decrease user's post count
+  await User.findByIdAndUpdate(
     req.user.id,
-    { $inc: { totalPosts: -1 } };
+    { $inc: { totalPosts: -1 } },
+    { new: true }
+  );
 
   res.status(200).json({
     success: true,
