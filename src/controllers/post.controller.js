@@ -240,7 +240,6 @@ exports.updatePost = catchAsyncError(async (req, res, next) => {
 });
 
 //* delete post
-
 exports.deletePost = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 

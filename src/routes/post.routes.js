@@ -25,10 +25,10 @@ router.get("/me", isAuthenticated, getMyPosts);
 router.get("/tag/:tag", getPostsByTag);
 
 router.get("/author/:authorId", getPostsByAuthor);
-router.get("/:slug", getSinglePost);
+router.get("/search/:slug", getSinglePost);
 
-router.put("/:id", isAuthenticated, updatePost);
-router.delete("/:id", isAuthenticated, deletePost);
-router.post("/:id/like", isAuthenticated, likePost);
+router.put("/update/:id", isAuthenticated, updatePost);
+router.delete("/delete/:id", isAuthenticated, deletePost);
+router.post("/like/:id", isAuthenticated, likePost);
 
 module.exports = router;
