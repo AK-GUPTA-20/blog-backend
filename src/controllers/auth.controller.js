@@ -7,43 +7,46 @@ const generateEmailTemplate = require("../utils/generateEmailTemplate");
 const { imagekit } = require("../config/ImageKit.upload");
 const crypto = require("crypto");
 
-//* Function to send verification code (Production Safe)
-const sendVerificationCode = async (user, verificationCode) => {
+//* Function to send verification code
+const sendVerificationCode = async (id, verificationCode, email, res) => {
   try {
     const html = generateEmailTemplate(verificationCode);
-
     await sendEmail({
-      email: user.email,
+      email,
       subject: "Your Verification Code",
-      message: "Use the verification code sent to your email to complete registration.",
+      message:
+        "Please use the verification code sent to your email to complete registration.",
       html,
     });
 
-    console.log(`✅ Verification email sent to ${user.email}`);
+    return res.status(200).json({
+      success: true,
+      message: `Verification email successfully sent to ${email}`,
+    });
   } catch (error) {
-    console.error("❌ Email sending failed:", error.message);
-    // Do NOT delete user
-    // User can use resend OTP API
+    await User.findByIdAndDelete(id);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send verification code. Please try again.",
+    });
   }
 };
 
-//* Register new user (Production Safe)
+//* Register new user
+/*
 const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password, avatar, bio } = req.body;
 
-  // Validate required fields
   if (!name || !email || !password) {
     return next(new ErrorHandler("All fields are required.", 400));
   }
 
-  // Validate password length
   if (password.length < 8 || password.length > 32) {
     return next(
       new ErrorHandler("Password must be between 8 and 32 characters.", 400)
     );
   }
 
-  // Check existing user
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
@@ -63,18 +66,46 @@ const register = catchAsyncError(async (req, res, next) => {
     ...(bio && { bio }),
   });
 
-  // Generate OTP
   const verificationCode = user.generateVerificationCode();
   await user.save({ validateModifiedOnly: true });
 
-  // Send response immediately (DO NOT WAIT FOR EMAIL)
-  res.status(201).json({
-    success: true,
-    message: "User registered successfully. Verification email is being sent.",
+  await sendVerificationCode(user._id, verificationCode, email, res);
+});
+
+*/
+
+//* Register new user (No Email Verification)
+const register = catchAsyncError(async (req, res, next) => {
+  const { name, email, password, avatar, bio } = req.body;
+
+  if (!name || !email || !password) {
+    return next(new ErrorHandler("All fields are required.", 400));
+  }
+
+  if (password.length < 8 || password.length > 32) {
+    return next(
+      new ErrorHandler("Password must be between 8 and 32 characters.", 400)
+    );
+  }
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    return next(new ErrorHandler("Email is already registered.", 400));
+  }
+
+  // Create user
+  const user = await User.create({
+    name,
+    email,
+    password,
+    avatar: avatar || "",
+    bio: bio || "",
+    isVerified: false,   
   });
 
-  // Send email in background
-  sendVerificationCode(user, verificationCode);
+  return sendToken(user, 201, "Registration successful.", res);
 });
 
 //* Verify OTP
