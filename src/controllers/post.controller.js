@@ -30,11 +30,10 @@ exports.createPost = catchAsyncError(async (req, res, next) => {
     publishedAt: new Date(),
   });
 
-   await User.findByIdAndUpdate(
+   
     req.user.id,
     { $inc: { totalPosts: 1 } },
-    { new: true }
-  );
+    { new: true };
 
   res.status(201).json({
     success: true,
@@ -259,10 +258,9 @@ exports.deletePost = catchAsyncError(async (req, res, next) => {
   await post.deleteOne();
 
    // Decrease user's post count
-  await User.findByIdAndUpdate(
+  
     req.user.id,
-    { $inc: { totalPosts: -1 } }
-  );
+    { $inc: { totalPosts: -1 } };
 
   res.status(200).json({
     success: true,
