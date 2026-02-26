@@ -3,6 +3,7 @@ const ErrorHandler = require("../middlewares/error");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const slugify = require("slugify");
 const User = require("../models/User.model");
+const xss = require("xss");
 
 //*  create a new post
 exports.createPost = catchAsyncError(async (req, res, next) => {
@@ -21,9 +22,13 @@ exports.createPost = catchAsyncError(async (req, res, next) => {
     slug = `${slug}-${Date.now()}`;
   }
 
+  const sanitizedContent = xss(content, {
+    whiteList: { p: [], br: [], strong: [], em: [], a: ['href'] },
+  });
+
   const post = await Post.create({
     title,
-    content,
+    content: sanitizedContent,
     tags,
     slug,
     author: req.user.id,
@@ -47,8 +52,8 @@ exports.createPost = catchAsyncError(async (req, res, next) => {
 
 //* GET ALL POSTS
 exports.getAllPosts = catchAsyncError(async (req, res, next) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const page = Math.min(Math.max(Number(req.query.page) || 1, 1), 1000);
+  const limit = Math.min(Number(req.query.limit) || 10, 100); 
   const skip = (page - 1) * limit;
 
   const { tag, search, author, sort } = req.query;

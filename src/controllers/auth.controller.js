@@ -33,7 +33,7 @@ const sendVerificationCode = async (id, verificationCode, email, res) => {
 };
 
 //* Register new user
-/*
+
 const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password, avatar, bio } = req.body;
 
@@ -72,41 +72,6 @@ const register = catchAsyncError(async (req, res, next) => {
   await sendVerificationCode(user._id, verificationCode, email, res);
 });
 
-*/
-
-//* Register new user (No Email Verification)
-const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, password, avatar, bio } = req.body;
-
-  if (!name || !email || !password) {
-    return next(new ErrorHandler("All fields are required.", 400));
-  }
-
-  if (password.length < 8 || password.length > 32) {
-    return next(
-      new ErrorHandler("Password must be between 8 and 32 characters.", 400)
-    );
-  }
-
-  // Check if user already exists
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) {
-    return next(new ErrorHandler("Email is already registered.", 400));
-  }
-
-  // Create user
-  const user = await User.create({
-    name,
-    email,
-    password,
-    avatar: avatar || "",
-    bio: bio || "",
-    isVerified: true,   
-  });
-
-  return sendToken(user, 201, "Registration successful.", res);
-});
 
 //* Verify OTP
 const verifyOTP = catchAsyncError(async (req, res, next) => {

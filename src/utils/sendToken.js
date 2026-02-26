@@ -9,7 +9,7 @@ const sendToken = (user, statusCode, message, res) => {
     ),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    sameSite: "strict", 
   };
 
   res.status(statusCode).cookie("token", token, options).json({

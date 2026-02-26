@@ -33,7 +33,7 @@ router.get("/user/:id", getUserById); // For viewing author profiles
 
 // ================= Protected Routes =================
 router.post(
-  "/upload/profile-image",
+  "/upload/profile-image", 
   isAuthenticated,
   upload.single("image"),
   uploadProfileImage
