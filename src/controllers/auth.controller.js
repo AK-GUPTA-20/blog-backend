@@ -33,7 +33,7 @@ const sendVerificationCode = async (id, verificationCode, email, res) => {
 };
 
 //* Register new user
-/*
+
 const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password, avatar, bio } = req.body;
 
@@ -71,8 +71,9 @@ const register = catchAsyncError(async (req, res, next) => {
 
   await sendVerificationCode(user._id, verificationCode, email, res);
 });
+  
 
-*/
+/*
 
 //* Register new user (No Email Verification)
 const register = catchAsyncError(async (req, res, next) => {
@@ -107,6 +108,10 @@ const register = catchAsyncError(async (req, res, next) => {
 
   return sendToken(user, 201, "Registration successful.", res);
 });
+
+*/
+
+
 
 //* Verify OTP
 const verifyOTP = catchAsyncError(async (req, res, next) => {

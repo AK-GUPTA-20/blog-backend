@@ -12,7 +12,7 @@ const authRoutes = require("./routes/auth.routes");
 const postRoutes = require("./routes/post.routes");
 
 const app = express();
-app.set("trust proxy", 1);
+//app.set("trust proxy", 1);
 
 
 // Helmet - Security headers

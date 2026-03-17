@@ -1,37 +1,47 @@
 const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// Utility function to send emails
-const sendEmail = async (options) => {
+require("dotenv").config();
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendMailWithNodemailer = async (to, subject, text) => {
   try {
-    // Create transporter
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port:  587,
-      secure: false,
+      service: "gmail",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
     });
 
-    // Email options
     const mailOptions = {
-      from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
-      to: options.email,
-      subject: options.subject,
-      text: options.message,
-      html: options.html || options.message,
+      from: process.env.GMAIL_USER,
+      to,
+      subject,
+      text,
     };
 
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    return info;
-  } catch (error) {
-    throw new Error("Failed to send email");
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", result.response);
+  } catch (err) {
+    console.error("Error sending email:", err);
   }
 };
 
-module.exports = sendEmail;
+const sendMailWithResend = async (to, subject, text) => {
+  try {
+    const response = await resend.emails.send({
+      from: "[onboarding@resend.dev](mailto:onboarding@resend.dev)",
+      to: to,
+      subject: subject,
+      text: text,
+    });
+    console.log("Email sent:", response);
+  } catch (err) {
+    console.error("Error sending email:", err);
+  }
+};
+
+module.exports = sendMailWithNodemailer;
+module.exports = sendMailWithResend;
