@@ -1,10 +1,10 @@
-# 🚀 Blog Backend API
+#  Blog Backend API
 
 A scalable and production-ready RESTful backend API for a blogging platform. This project provides comprehensive authentication, advanced post management, user management, interactions, image uploads, email utilities, and robust error handling using Node.js, Express, and MongoDB.
 
 ---
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 * **Runtime:** Node.js
 * **Framework:** Express.js
@@ -72,7 +72,6 @@ BLOG-BACKEND
 * **User Registration** - Email verification with OTP
 * **User Login** - JWT-based authentication with secure tokens
 * **Email Verification** - OTP verification process
-* **OTP Management** - Resend OTP functionality
 * **JWT Authentication** - Secure protected routes with JWT tokens
 * **HTTP-only Cookies** - Token storage in secure cookies
 * **Protected Routes** - Role-based access control
@@ -86,15 +85,11 @@ BLOG-BACKEND
 * **Get Single Post** - Retrieve individual posts by slug
 * **Get All Posts** - Retrieve posts with pagination and filtering
 * **Slug Generation** - SEO-friendly URL slugs with duplicate handling
-* **Draft Management** - Save posts as drafts before publishing
 * **Scheduled Publishing** - Schedule posts for future publication
 * **Post Status** - Draft, Published, Archived states
-* **Featured Posts** - Mark posts as featured for homepage display
-* **Post Pinning** - Pin important posts to top
 * **Categories** - Organize posts by 10 different categories
 * **Tags** - Multiple tags per post for better organization
 * **Reading Time** - Automatic calculation of article reading time
-* **SEO Optimization** - SEO title, description, and keywords
 * **Search Functionality** - Full-text search across posts
 
 ### 👤 User Management
@@ -102,15 +97,11 @@ BLOG-BACKEND
 * **Get Current User Profile** - Retrieve authenticated user details
 * **Get User by ID** - View public user profiles
 * **Secure Password Handling** - Bcrypt password hashing
-* **Password Hashing** - Automatic password encryption on save
-* **Password Comparison** - Secure password verification
 * **Profile Updates** - Edit name, bio, and social links
 * **Avatar Management** - Profile picture upload and storage
 * **Social Links** - Twitter, GitHub, LinkedIn, Website links
-* **User Roles** - User, Admin, Moderator role management
 * **User Status** - Active/Inactive account management
 * **Account Blocking** - Block/Unblock user functionality
-* **User Preferences** - Email notifications, Privacy, Comments settings
 * **Last Login Tracking** - Track user's last login timestamp
 * **Email Verification** - Email verification code management
 * **Password Reset** - Forgot password with secure token reset
@@ -148,7 +139,6 @@ BLOG-BACKEND
 * **Tag Filtering** - Filter posts by tags
 * **Category Filtering** - Filter posts by category
 * **Author Filtering** - View specific author's posts
-* **Date Sorting** - Sort by newest, oldest
 * **Popularity Sorting** - Sort by views and likes
 * **Featured Posts** - Filter featured content
 * **Search Pagination** - Paginated search results
@@ -159,7 +149,6 @@ BLOG-BACKEND
 * **JWT Authentication** - Secure token-based auth
 * **HTTP-only Cookies** - Prevent XSS attacks
 * **Password Hashing** - Bcrypt with salt rounds
-* **Centralized Error Handling** - Prevent info leakage
 * **Environment-based Configuration** - Secure config management
 * **Rate Limiting** - Prevent brute force and DoS attacks
 * **CORS Configuration** - Restrict cross-origin requests
