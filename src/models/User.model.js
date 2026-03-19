@@ -30,16 +30,17 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // Profile Info
     avatar: {
       type: String,
-      default:
-        "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+      default: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
     },
 
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "moderator"],
       default: "user",
+      index: true, // KEEP THIS - Don't add schema.index()
     },
 
     bio: {
@@ -48,9 +49,18 @@ const userSchema = new mongoose.Schema(
       maxLength: [500, "Bio cannot exceed 500 characters"],
     },
 
+    // Social & Verification 
+    socialLinks: {
+      twitter: { type: String, default: "" },
+      github: { type: String, default: "" },
+      linkedin: { type: String, default: "" },
+      website: { type: String, default: "" },
+    },
+
     isVerified: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     verificationCode: {
@@ -63,6 +73,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // Password Reset 
     resetPasswordToken: {
       type: String,
       select: false,
@@ -73,30 +84,101 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // Account Stats 
     totalPosts: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+
+    totalFollowers: {
       type: Number,
       default: 0,
     },
 
+    totalFollowing: {
+      type: Number,
+      default: 0,
+    },
+
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // Account Status
     isActive: {
       type: Boolean,
       default: true,
+      index: true,
+    },
+
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+
+    blockedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
+
+    preferences: {
+      emailNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      privateProfile: {
+        type: Boolean,
+        default: false,
+      },
+      allowComments: {
+        type: Boolean,
+        default: true,
+      },
     },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-//  Pre-save middleware (Hash Password)
+// INDEXES 
+userSchema.index({ email: 1, isVerified: 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ totalPosts: -1 });
 
+// VIRTUALS
+userSchema.virtual("isNewUser").get(function () {
+  const daysSinceCreation = (Date.now() - this.createdAt) / (1000 * 60 * 60 * 24);
+  return daysSinceCreation < 7;
+});
+
+// PRE-SAVE MIDDLEWARE 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-//  Compare Password Method
+// Compare password
 userSchema.methods.comparePassword = async function (enteredPassword) {
   try {
     return await bcrypt.compare(enteredPassword, this.password);
@@ -105,59 +187,49 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   }
 };
 
-//  Generate Email Verification Code
+// Generate verification code
 userSchema.methods.generateVerificationCode = function () {
   const generateRandomFiveDigitNumber = () => {
     const firstDigit = Math.floor(Math.random() * 9) + 1;
     const remainingDigits = Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, "0");
-
     return parseInt(firstDigit + remainingDigits);
   };
 
   const verificationCode = generateRandomFiveDigitNumber();
-
   this.verificationCode = verificationCode;
   this.verificationCodeExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
-
   return verificationCode;
 };
 
-//  Generate JWT Token
+// Generate JWT token
 userSchema.methods.generateToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
 };
 
-//  Generate Reset Password Token
-
+// Generate reset password token
 userSchema.methods.generateResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
-
   this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
-
   return resetToken;
 };
 
-//  Remove Sensitive Fields from Response
-
+// Remove sensitive fields
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
-
   delete user.password;
   delete user.verificationCode;
   delete user.verificationCodeExpire;
   delete user.resetPasswordToken;
   delete user.resetPasswordExpire;
   delete user.__v;
-
   return user;
 };
 

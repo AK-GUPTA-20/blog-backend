@@ -73,7 +73,7 @@ const startServer = async () => {
       console.log(`📡 Listening on port ${PORT}`);
       console.log(`🔗 URL: http://localhost:${PORT}`);
       console.log("=====================================");
-    });
+    }); 
 
   } catch (error) {
     console.error("❌ Server startup failed:", error);

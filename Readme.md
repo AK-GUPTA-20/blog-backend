@@ -1,19 +1,20 @@
-# Blog-Backend
+# 🚀 Blog Backend API
 
-A scalable and production-ready RESTful backend API for a blogging platform. This project provides authentication, post management, user management, interactions, image uploads, email utilities, and robust error handling using Node.js, Express, and MongoDB.
+A scalable and production-ready RESTful backend API for a blogging platform. This project provides comprehensive authentication, advanced post management, user management, interactions, image uploads, email utilities, and robust error handling using Node.js, Express, and MongoDB.
 
 ---
 
 ## 🚀 Tech Stack
 
-* Node.js
-* Express.js
-* MongoDB + Mongoose
-* JWT Authentication
-* ImageKit (for image uploads)
-* Nodemailer (for email services)
-* Morgan (logging)
-* Jest (testing)
+* **Runtime:** Node.js
+* **Framework:** Express.js
+* **Database:** MongoDB + Mongoose
+* **Authentication:** JWT (JSON Web Tokens)
+* **Image Upload:** ImageKit
+* **Email Service:** Nodemailer
+* **Logging:** Morgan
+* **Security:** Helmet, Rate Limiting, CORS
+* **Testing:** Jest, Supertest
 
 ---
 
@@ -26,7 +27,7 @@ BLOG-BACKEND
 ├── src
 │   ├── config
 │   │   ├── db.js
-│   │   └── imageKit.upload.js
+│   │   └── ImageKit.upload.js
 │   │
 │   ├── controllers
 │   │   ├── auth.controller.js
@@ -38,7 +39,7 @@ BLOG-BACKEND
 │   │   └── error.js
 │   │
 │   ├── models
-│   │   ├── interaction.model.js
+│   │   ├── Comment.model.js
 │   │   ├── Post.model.js
 │   │   └── User.model.js
 │   │
@@ -54,8 +55,11 @@ BLOG-BACKEND
 │   └── app.js
 │
 ├── .env
+├── .gitignore
+├── API_DOCUMENTATION.md
 ├── package.json
 ├── package-lock.json
+├── Readme.md
 └── server.js
 ```
 
@@ -65,71 +69,135 @@ BLOG-BACKEND
 
 ### 🔐 Authentication
 
-* User registration
-* User login
-* JWT-based authentication
-* Protected routes
-* Token handling via cookies
+* **User Registration** - Email verification with OTP
+* **User Login** - JWT-based authentication with secure tokens
+* **Email Verification** - OTP verification process
+* **OTP Management** - Resend OTP functionality
+* **JWT Authentication** - Secure protected routes with JWT tokens
+* **HTTP-only Cookies** - Token storage in secure cookies
+* **Protected Routes** - Role-based access control
+* **Token Handling** - Automatic token expiration and renewal
 
 ### 📝 Post Management
 
-* Create post
-* Update post
-* Delete post
-* Get single post
-* Get all posts
-* Slug generation for SEO-friendly URLs
+* **Create Post** - Create new blog posts with full metadata
+* **Update Post** - Edit existing posts with version control
+* **Delete Post** - Remove posts with authorization checks
+* **Get Single Post** - Retrieve individual posts by slug
+* **Get All Posts** - Retrieve posts with pagination and filtering
+* **Slug Generation** - SEO-friendly URL slugs with duplicate handling
+* **Draft Management** - Save posts as drafts before publishing
+* **Scheduled Publishing** - Schedule posts for future publication
+* **Post Status** - Draft, Published, Archived states
+* **Featured Posts** - Mark posts as featured for homepage display
+* **Post Pinning** - Pin important posts to top
+* **Categories** - Organize posts by 10 different categories
+* **Tags** - Multiple tags per post for better organization
+* **Reading Time** - Automatic calculation of article reading time
+* **SEO Optimization** - SEO title, description, and keywords
+* **Search Functionality** - Full-text search across posts
 
 ### 👤 User Management
 
-* Get current user profile
-* Secure password handling
+* **Get Current User Profile** - Retrieve authenticated user details
+* **Get User by ID** - View public user profiles
+* **Secure Password Handling** - Bcrypt password hashing
+* **Password Hashing** - Automatic password encryption on save
+* **Password Comparison** - Secure password verification
+* **Profile Updates** - Edit name, bio, and social links
+* **Avatar Management** - Profile picture upload and storage
+* **Social Links** - Twitter, GitHub, LinkedIn, Website links
+* **User Roles** - User, Admin, Moderator role management
+* **User Status** - Active/Inactive account management
+* **Account Blocking** - Block/Unblock user functionality
+* **User Preferences** - Email notifications, Privacy, Comments settings
+* **Last Login Tracking** - Track user's last login timestamp
+* **Email Verification** - Email verification code management
+* **Password Reset** - Forgot password with secure token reset
+* **Password Change** - Authenticated password change
+* **Account Deletion** - Delete account with confirmation
+* **User Stats** - Total posts, followers, following counts
 
-### ❤️ Interactions
+### ❤️ Comments
 
-* Like / Unlike posts
-* Interaction tracking per user
+* **Like / Unlike Posts** - Toggle like on posts
+* **Like Counter** - Real-time like count tracking
+* **Interaction Tracking** - Track which users liked posts
+* **Save / Unsave Posts** - Save posts for later reading
+* **Save Counter** - Track saved post counts
+* **Like Notifications** - Notify users of post likes
+* **Follow / Unfollow Users** - Follow other users
+* **Follower Management** - Track followers and following
+* **Follow Counter** - Display follower/following counts
+* **User Blocking** - Block users from viewing profile
 
 ### 🖼 Image Upload
 
-* Image upload integration using ImageKit
-* Cloud storage management
+* **Profile Image Upload** - ImageKit integration for profile pictures
 
 ### 📧 Email System
 
-* Email sending utility
-* Custom email template generation
+* **Email Sending** - Resend email service integration
+* **Email Templates** - Custom HTML email templates
+* **Verification Emails** - Send OTP verification emails
+* **Password Reset Emails** - Send password reset links
 
-### 🛡 Error Handling
+### 🔍 Advanced Search & Filtering
 
-* Centralized error middleware
-* Async error wrapper
-* Production-ready error responses
+* **Full-Text Search** - Search across title, content, description
+* **Tag Filtering** - Filter posts by tags
+* **Category Filtering** - Filter posts by category
+* **Author Filtering** - View specific author's posts
+* **Date Sorting** - Sort by newest, oldest
+* **Popularity Sorting** - Sort by views and likes
+* **Featured Posts** - Filter featured content
+* **Search Pagination** - Paginated search results
+
+
+### 🔒 Security Best Practices
+
+* **JWT Authentication** - Secure token-based auth
+* **HTTP-only Cookies** - Prevent XSS attacks
+* **Password Hashing** - Bcrypt with salt rounds
+* **Centralized Error Handling** - Prevent info leakage
+* **Environment-based Configuration** - Secure config management
+* **Rate Limiting** - Prevent brute force and DoS attacks
+* **CORS Configuration** - Restrict cross-origin requests
+* **Helmet Security Headers** - HTTP security headers
+* **Input Sanitization** - NoSQL injection prevention
+* **Token Expiration** - Automatic token refresh
 
 ---
 
 ## 🔧 Environment Variables (.env)
 
-Create a `.env` file in the root directory and add:
+Create a `.env` file in the root directory:
 
 ```
-PORT=5000
+# Server Configuration
+PORT=4000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 
+# Database Configuration
 MONGO_URI=your_mongodb_connection_string
 
-JWT_SECRET=your_jwt_secret
+# JWT Configuration
+JWT_SECRET_KEY=your_jwt_secret_key_here_change_in_production
 JWT_EXPIRE=7d
 COOKIE_EXPIRE=7
 
+# ImageKit Configuration (for image uploads)
 IMAGEKIT_PUBLIC_KEY=your_public_key
 IMAGEKIT_PRIVATE_KEY=your_private_key
 IMAGEKIT_URL_ENDPOINT=your_url_endpoint
 
-SMTP_HOST=your_smtp_host
-SMTP_PORT=your_smtp_port
-SMTP_EMAIL=your_email
-SMTP_PASSWORD=your_email_password
+# Email Configuration 
+EMAIL_SERVICE=resend
+GMAIL_USER=****@gmail.com
+GMAIL_PASS=**** **** **** ****
+RESEND_API_KEY=****************
+
 ```
 
 ---
@@ -138,26 +206,35 @@ SMTP_PASSWORD=your_email_password
 
 ### 1️⃣ Clone the repository
 
-```
+```bash
 git clone <repository_url>
 cd blog-backend
 ```
 
 ### 2️⃣ Install dependencies
 
-```
+```bash
 npm install
 ```
 
-### 3️⃣ Run in development
+### 3️⃣ Create .env file
 
+```bash
+cp .env.example .env
+# Edit .env with your configuration
 ```
+
+### 4️⃣ Run in development
+
+```bash
 npm run dev
 ```
 
-### 4️⃣ Run in production
+Server runs on: `http://localhost:4000`
 
-```
+### 5️⃣ Run in production
+
+```bash
 npm start
 ```
 
@@ -165,21 +242,46 @@ npm start
 
 ## 📡 API Routes Overview
 
-### Auth Routes (`/api/auth`)
+### Authentication Routes (`/api/v1/auth`)
 
-* POST /register
-* POST /login
-* GET /logout
-* GET /me
+#### Public Routes
+* **POST** `/register` - User registration with email verification
+* **POST** `/verify-otp` - Verify email with OTP
+* **POST** `/resend-otp` - Resend verification OTP
+* **POST** `/login` - User login
+* **POST** `/forgot-password` - Request password reset
+* **POST** `/reset-password/:token` - Reset password with token
+* **GET** `/:id` - Get user profile by ID
 
-### Post Routes (`/api/posts`)
+#### Protected Routes
+* **POST** `/logout` - User logout
+* **GET** `/me/profile` - Get current user profile
+* **PUT** `/me/update-profile` - Update user profile
+* **POST** `/me/upload-profile-image` - Upload profile picture
+* **POST** `/me/change-password` - Change password
+* **POST** `/me/delete-account` - Delete user account
+* **POST** `/me/follow/:userId` - Follow/Unfollow user
 
-* GET /
-* GET /:slug
-* POST /
-* PUT /:id
-* DELETE /:id
-* POST /:id/like
+### Post Routes (`/api/v1/posts`)
+
+#### Public Routes
+* **GET** `/` - Get all posts with pagination, filtering & sorting
+* **GET** `/top` - Get top/trending posts
+* **GET** `/featured` - Get featured posts
+* **GET** `/search` - Search posts by query
+* **GET** `/article/:slug` - Get single post by slug
+* **GET** `/category/:category` - Get posts by category
+* **GET** `/author/:authorId` - Get posts by specific author
+* **GET** `/tag/:tag` - Get posts by specific tag
+
+#### Protected Routes
+* **POST** `/create` - Create new post (draft or publish)
+* **GET** `/me/posts` - Get current user's posts
+* **PUT** `/:id` - Update post
+* **DELETE** `/:id` - Delete post
+* **POST** `/:id/like` - Like/Unlike post
+* **POST** `/:id/save` - Save/Unsave post
+* **POST** `/admin/publish-scheduled` - Publish scheduled posts (Admin only)
 
 ---
 
@@ -187,58 +289,62 @@ npm start
 
 Run tests using:
 
-```
+```bash
 npm test
 ```
 
-Make sure `NODE_ENV=test` is configured properly.
+Run tests in watch mode:
 
----
+```bash
+npm run test:watch
+```
 
-## 🏗 Architecture Overview
-
-* `server.js` → Entry point
-* `app.js` → Express configuration & middleware setup
-* MVC Pattern:
-
-  * Models → Database schema
-  * Controllers → Business logic
-  * Routes → API endpoints
-  * Middlewares → Authentication & error handling
-  * Utils → Helper functions
+Make sure `NODE_ENV=test` is configured properly in `.env`.
 
 ---
 
 ## 🔐 Security Best Practices Implemented
 
-* JWT Authentication
-* HTTP-only cookies
-* Password hashing (bcrypt)
-* Centralized error handling
-* Environment-based configuration
+* ✅ **JWT Authentication** - Stateless secure authentication
+* ✅ **HTTP-only Cookies** - Secure token storage
+* ✅ **Password Hashing** - Bcrypt with salt rounds (10)
+* ✅ **Centralized Error Handling** - Prevent information leakage
+* ✅ **Environment-based Configuration** - Secure credential management
+* ✅ **Rate Limiting** - Prevent brute force attacks (20-100 req/15min)
+* ✅ **CORS Configuration** - Restrict cross-origin requests
+* ✅ **Helmet Security Headers** - HTTP security headers
+* ✅ **Input Sanitization** - NoSQL injection prevention
+* ✅ **Token Expiration** - Automatic token refresh (7 days)
+* ✅ **Role-based Access Control** - User, Admin, Moderator roles
+* ✅ **Request Validation** - Input validation on all routes
 
 ---
 
-## 📌 Future Improvements
+## 🤝 Contributing
 
-* Role-based authorization (Admin/User)
-* Pagination & filtering
-* Comment system
-* API documentation (Swagger)
-* Docker support
-
----
-
-## 👨‍💻 Author
-
-Developed as a full-stack blogging backend system following best practices and clean architecture principles.
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see LICENSE file for details.
 
 ---
 
-If you found this project helpful, feel free to ⭐ the repository.
+## 🎉 Acknowledgments
+
+* Express.js community
+* MongoDB documentation
+* JWT best practices
+* RESTful API design guidelines
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** March 18, 2025  
+**Status:** ✅ Production Ready

@@ -12,8 +12,8 @@ const authRoutes = require("./routes/auth.routes");
 const postRoutes = require("./routes/post.routes");
 
 const app = express();
-//app.set("trust proxy", 1);
 
+// ==================== SECURITY MIDDLEWARE ====================
 
 // Helmet - Security headers
 app.use(helmet());
@@ -23,7 +23,7 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -31,24 +31,19 @@ app.use(
 // Sanitize data against NoSQL injection
 //app.use(mongoSanitize());
 
-// General rate limiting for all API routes
+
+// ==================== RATE LIMITING ====================
+
+// General rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, 
+  max: 100,
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-//  Body Parser 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cookieParser());
-
-// Apply general rate limiting to all API routes
-app.use("/api/", limiter);
-
-// Stricter rate limit for auth routes only
+// Auth rate limiter (stricter)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
@@ -57,36 +52,42 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ==================== BODY PARSER ====================
 
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser());
 
+// ==================== LOGGING ====================
 
-// Development logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Production logging
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 }
 
 
+app.use("/api/", limiter);
 
-// Health check route
+
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Blog Backend API is running 🚀",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
   });
 });
 
-//  routes
-app.use("/api/v1/user", authLimiter, authRoutes);
+// API ROUTES 
+
+app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/posts", postRoutes);
 
-
+// ERROR HANDLING 
 
 // 404 - Route not found
 app.use((req, res, next) => {

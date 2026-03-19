@@ -1,7 +1,5 @@
 const express = require("express");
-
 const { upload } = require("../config/ImageKit.upload");
-
 const {
   register,
   verifyOTP,
@@ -12,36 +10,41 @@ const {
   getUser,
   getUserById,
   updateProfile,
+  changePassword,
   forgotPassword,
   resetPassword,
-  changePassword,
   deleteAccount,
+  toggleFollowUser,
 } = require("../controllers/auth.controller");
-
 const { isAuthenticated } = require("../middlewares/auth");
 
 const router = express.Router();
 
-// ================= Public Routes =================
+// ==================== PUBLIC ROUTES ====================
+
+
 router.post("/register", register);
 router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 router.post("/login", login);
-router.post("/password/forgot", forgotPassword);
-router.post("/password/reset/:token", resetPassword);
-router.get("/user/:id", getUserById); // For viewing author profiles
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
+router.get("/:id", getUserById);
 
-// ================= Protected Routes =================
+// ==================== PROTECTED ROUTES ====================
+
+router.post("/logout", isAuthenticated, logout);
+router.get("/me/profile", isAuthenticated, getUser);
+router.put("/me/update-profile", isAuthenticated, updateProfile);
 router.post(
-  "/upload/profile-image",
+  "/me/upload-profile-image",
   isAuthenticated,
   upload.single("image"),
   uploadProfileImage
 );
-router.get("/logout", isAuthenticated, logout);
-router.get("/me", isAuthenticated, getUser);
-router.put("/update-profile", isAuthenticated, updateProfile);
-router.put("/change-password", isAuthenticated, changePassword);
-router.delete("/delete-account", isAuthenticated, deleteAccount);
+
+router.post("/me/change-password", isAuthenticated, changePassword);
+router.post("/me/delete-account", isAuthenticated, deleteAccount);
+router.post("/me/follow/:userId", isAuthenticated, toggleFollowUser); // Follow/unfollow user
 
 module.exports = router;
