@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "b1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-		"name": "🚀 Blog Backend API",
-		"description": "Complete Postman collection for the Blog Backend API. Includes authentication, post management, interactions, and user profiles.",
+		"name": "🚀 Blog Backend API (Complete)",
+		"description": "Complete Postman collection for the Blog Backend API. Includes authentication, post management, and comments management.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -508,6 +508,211 @@
 							"raw": "{{baseUrl}}/posts/admin/publish-scheduled",
 							"host": ["{{baseUrl}}"],
 							"path": ["posts", "admin", "publish-scheduled"]
+						}
+					}
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "6. Comments (Public)",
+			"item": [
+				{
+					"name": "Get All Comments on a Post",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/post/65f3c2a8b1c2d3e4f5g6h7i9?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "post", "65f3c2a8b1c2d3e4f5g6h7i9"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Single Comment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8"]
+						}
+					}
+				},
+				{
+					"name": "Get Comment Replies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8/replies?page=1&limit=5",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8", "replies"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "5" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Comments (Protected)",
+			"item": [
+				{
+					"name": "Create Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"This is an amazing article!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/post/65f3c2a8b1c2d3e4f5g6h7i9/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "post", "65f3c2a8b1c2d3e4f5g6h7i9", "create"]
+						}
+					}
+				},
+				{
+					"name": "Reply to Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"I agree with you!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8/reply",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8", "reply"]
+						}
+					}
+				},
+				{
+					"name": "Update Comment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Updated comment text\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8"]
+						}
+					}
+				},
+				{
+					"name": "Delete Comment (Soft Delete)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8"]
+						}
+					}
+				},
+				{
+					"name": "Like / Unlike Comment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/65f3c2a8b1c2d3e4f5g6h7i8/like",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "65f3c2a8b1c2d3e4f5g6h7i8", "like"]
+						}
+					}
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "8. Comments (Admin)",
+			"item": [
+				{
+					"name": "Get All Comments (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/comments/admin/get-all/comments?page=1&limit=20&isDeleted=false",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "admin", "get-all", "comments"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "20" },
+								{ "key": "postId", "value": "65f3c2a8b1c2d3e4f5g6h7i9", "disabled": true },
+								{ "key": "isDeleted", "value": "false" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Force Delete Comment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"Spam content\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/admin/delete/65f3c2a8b1c2d3e4f5g6h7i8/force",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "admin", "delete", "65f3c2a8b1c2d3e4f5g6h7i8", "force"]
 						}
 					}
 				}

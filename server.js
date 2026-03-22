@@ -1,43 +1,56 @@
 require("dotenv").config();
 const { validateEnvironment } = require("./src/config/environment");
 const http = require("http");
-const app = require("./src/app");
-const connectDB = require("./src/config/db");
+const socketIo = require("socket.io");
+const dns = require("dns");
 
-const dns = require('dns'); 
-//change dns
-dns.setServers(["1.1.1.1","8.8.8.8"]);
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-
-// Validate environment variables FIRST
+// Validate environment variables
 try {
   validateEnvironment();
 } catch (error) {
   console.error(error.message);
-  process.exit(1); // Exit with error code
+  process.exit(1);
 }
 
+const app = require("./src/app");
+const connectDB = require("./src/config/db");
+const { initializeCommentSocket } = require("./src/config/socket-comments");
+const { getCorsOptions } = require("./src/config/cors");
 
-// Create HTTP server
+// Create HTTP server with Socket.io
 const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: getCorsOptions(),
+  transports: ["websocket", "polling"],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: 5,
+});
 
-// ==================== Graceful Shutdown ====================
+// Initialize Socket.io for comments
+initializeCommentSocket(io);
+
+// GRACEFUL SHUTDOWN 
 
 const gracefulShutdown = async (signal) => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
 
-  // Stop accepting new connections
   server.close(async () => {
     console.log("HTTP server closed");
 
     try {
-      // Close database connection
       const mongoose = require("mongoose");
       await mongoose.connection.close();
       console.log("MongoDB connection closed");
+
+      io.close();
+      console.log("Socket.io connections closed");
 
       console.log("Graceful shutdown completed");
       process.exit(0);
@@ -47,49 +60,43 @@ const gracefulShutdown = async (signal) => {
     }
   });
 
-  // Force shutdown after 10 seconds
   setTimeout(() => {
     console.error("Forcing shutdown after timeout");
     process.exit(1);
   }, 10000);
 };
 
-// ==================== Error Handlers ====================
+// ERROR HANDLERS 
 
-// Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
   gracefulShutdown("UNHANDLED_REJECTION");
 });
 
-// Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   gracefulShutdown("UNCAUGHT_EXCEPTION");
 });
 
-// Handle termination signals
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-//  Start Server 
+// START SERVER 
 
 const startServer = async () => {
   try {
     await connectDB();
+
     server.listen(PORT, () => {
       console.log("=====================================");
       console.log(`🚀 Server running in ${NODE_ENV} mode`);
-      console.log(`📡 Listening on port ${PORT}`);
       console.log(`🔗 URL: http://localhost:${PORT}`);
       console.log("=====================================");
-    }); 
-
+    });
   } catch (error) {
-    console.error("❌ Server startup failed:", error);
+    console.error("Server startup failed:", error);
     process.exit(1);
   }
 };
 
-// Start the server
 startServer();

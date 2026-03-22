@@ -26,7 +26,7 @@ const commentSchema = new mongoose.Schema(
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comment",
-      default: null, // For nested replies
+      default: null,
     },
 
     replies: [
@@ -39,6 +39,7 @@ const commentSchema = new mongoose.Schema(
     likes: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     likedBy: [
@@ -61,20 +62,35 @@ const commentSchema = new mongoose.Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
-    status: {
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    deletionReason: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "approved",
+      default: null,
+      maxlength: [200, "Deletion reason cannot exceed 200 characters"],
     },
   },
   { timestamps: true }
 );
 
-//INDEXES
+// INDEXES 
+
 commentSchema.index({ post: 1, createdAt: -1 });
-commentSchema.index({ author: 1 });
+
 commentSchema.index({ parentComment: 1 });
+
+commentSchema.index({ post: 1, isDeleted: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Comment", commentSchema);

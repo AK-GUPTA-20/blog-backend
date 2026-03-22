@@ -46,7 +46,6 @@ const validateEnvironment = () => {
     throw new Error(`Missing ${missingVars.length} required environment variables`);
   }
 
-  console.log(" All required environment variables are set");
 };
 
 

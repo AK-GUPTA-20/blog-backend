@@ -9,46 +9,39 @@ const ErrorHandler = require("./middlewares/error");
 const { errorMiddleware } = require("./middlewares/error");
 const authRoutes = require("./routes/auth.routes");
 const postRoutes = require("./routes/post.routes");
+const commentRoutes = require("./routes/comment.routes");
 const { getCorsOptions } = require("./config/cors");
 
 const app = express();
 
-// ==================== SECURITY MIDDLEWARE ====================
+// SECURITY MIDDLEWARE 
 
-// Helmet - Security headers
 app.use(helmet());
-
-// CORS configuration
 app.use(cors(getCorsOptions()));
 
+// RATE LIMITING 
 
-// ==================== RATE LIMITING ====================
-
-// General rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Auth rate limiter (stricter)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
   message: "Too many authentication attempts, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// ==================== BODY PARSER ====================
-
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-// ==================== LOGGING ====================
+// LOGGING 
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -58,9 +51,9 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 }
 
-
 app.use("/api/", limiter);
 
+// ==================== ROUTES ====================
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -72,19 +65,16 @@ app.get("/", (req, res) => {
   });
 });
 
-// API ROUTES 
-
 app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/posts", postRoutes);
+app.use("/api/v1/comments", commentRoutes);
 
 // ERROR HANDLING 
 
-// 404 - Route not found
 app.use((req, res, next) => {
   next(new ErrorHandler(`Route ${req.originalUrl} not found`, 404));
 });
 
-// Global error middleware
 app.use(errorMiddleware);
 
 module.exports = app;
