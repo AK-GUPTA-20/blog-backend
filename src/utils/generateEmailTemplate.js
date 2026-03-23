@@ -333,7 +333,7 @@ const generateEmailTemplate = (verificationCode) => {
 
             <div class="expiry">
               <span class="expiry-icon">⏱</span>
-              <span><strong>This code expires in 10 minutes.</strong> If it expires, you can request a new one from the sign-up page.</span>
+              <span><strong>This code expires in 12 hours.</strong> If it expires, you can request a new one from the sign-up page.</span>
             </div>
 
             <hr class="rule">

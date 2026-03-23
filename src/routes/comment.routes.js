@@ -1,5 +1,5 @@
 const express = require("express");
-const { isAuthenticated } = require("../middlewares/auth");
+const { isAuthenticated, isAuthorized } = require("../middlewares/auth");
 
 const {
   createComment,
@@ -36,9 +36,9 @@ router.post("/:commentId/like", isAuthenticated, toggleLikeComment);
 // ==================== ADMIN ONLY ROUTES ====================
 
 // Get all comments for moderation (Admin)
-router.get("/admin/get-all/comments", isAuthenticated, getAllComments);
+router.get("/admin/get-all/comments", isAuthenticated, isAuthorized("admin"), getAllComments);
 
 // Force delete comment - Permanent deletion (Admin only)
-router.delete("/admin/delete/:commentId/force", isAuthenticated, forceDeleteComment);
+router.delete("/admin/delete/:commentId/force", isAuthenticated, isAuthorized("admin"), forceDeleteComment);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "b1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
-		"name": "🚀 Blog Backend API (Complete)",
-		"description": "Complete Postman collection for the Blog Backend API. Includes authentication, post management, and comments management.",
+		"name": "🚀 Blog Backend API(locally) ",
+		"description": "Complete Postman collection for the Blog Backend API. Includes authentication, post management, and comments management. include 27 endpoints .",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -105,7 +105,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"dellnone4@gmail.com\"\n}"
+							"raw": "{\n    \"email\": \"vaboha4177@paylaar.com\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/forgot-password",
@@ -126,7 +126,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"newPassword\": \"newSecurePassword456\"\n}"
+							"raw": "{\n    \"password\": \"newSecurePassword456\",\n    \"confirmPassword\": \"newSecurePassword456\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/reset-password/sample-reset-token-123",
@@ -176,7 +176,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Vaboha Updated\",\n    \"bio\": \"Passionate Backend Developer & Tech Blogger\",\n    \"socialLinks\": {\n        \"twitter\": \"https://twitter.com/vaboha\",\n        \"github\": \"https://github.com/vaboha\"\n    }\n}"
+							"raw": "{\n    \"name\": \"Vaboha Updated\",\n    \"bio\": \"Passionate Backend Developer & Tech Blogger\",\n    \"socialLinks\": {\n        \"twitter\": \"https://twitter.com/vaboha\",\n        \"github\": \"https://github.com/vaboha\",\n        \"linkedin\": \"https://linkedin.com/in/vaboha\"\n    },\n    \"preferences\": {\n        \"emailNotifications\": true,\n        \"privateProfile\": false\n    }\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/me/update-profile",
@@ -197,12 +197,6 @@
 									"key": "image",
 									"type": "file",
 									"description": "Select an image file from your computer here."
-								},
-								{
-									"key": "imageUrl",
-									"value": "https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
-									"type": "text",
-									"description": "Fallback URL if backend accepts direct links instead of files."
 								}
 							]
 						},
@@ -225,7 +219,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"oldPassword\": \"securePassword123\",\n    \"newPassword\": \"newSecurePassword456\"\n}"
+							"raw": "{\n    \"currentPassword\": \"securePassword123\",\n    \"newPassword\": \"newSecurePassword456\",\n    \"confirmPassword\": \"newSecurePassword456\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/me/change-password",
@@ -262,7 +256,16 @@
 					"name": "Delete Account",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"securePassword123\"\n}"
+						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/me/delete-account",
 							"host": ["{{baseUrl}}"],
@@ -406,7 +409,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"Scaling Node.js Backends in 2024\",\n    \"content\": \"This is the comprehensive content of my post covering performance optimizations, clustering, and caching strategies...\",\n    \"description\": \"A deep dive into scaling Node.js applications.\",\n    \"category\": \"Technology\",\n    \"tags\": [\"Nodejs\", \"Backend\", \"API\", \"Scaling\"],\n    \"status\": \"Published\",\n    \"isFeatured\": true,\n    \"scheduledAt\": null,\n    \"coverImage\": \"https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80\"\n}"
+							"raw": "{\n    \"title\": \"Scaling Node.js Backends in 2024\",\n    \"content\": \"This is the comprehensive content of my post covering performance optimizations, clustering, and caching strategies for Node.js applications.\",\n    \"description\": \"Learn how to scale Node.js backends efficiently\",\n    \"category\": \"Technology\",\n    \"tags\": [\"nodejs\", \"backend\", \"scalability\"],\n    \"status\": \"published\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/posts/create",
@@ -439,7 +442,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"Scaling Node.js Backends (Updated 2024)\",\n    \"status\": \"Draft\"\n}"
+							"raw": "{\n    \"title\": \"Scaling Node.js Backends (Updated 2024)\",\n    \"status\": \"draft\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/posts/64f1b2c3d4e5f6a7b8c9d0e2",
@@ -500,7 +503,7 @@
 			"name": "5. Posts (Admin)",
 			"item": [
 				{
-					"name": "Publish Scheduled Posts",
+					"name": "Publish Scheduled Posts (Admin Only)",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -517,7 +520,7 @@
 				"bearer": [
 					{
 						"key": "token",
-						"value": "{{token}}",
+						"value": "{{adminToken}}",
 						"type": "string"
 					}
 				]
@@ -678,7 +681,7 @@
 			"name": "8. Comments (Admin)",
 			"item": [
 				{
-					"name": "Get All Comments (Admin)",
+					"name": "Get All Comments (Admin Only)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -689,14 +692,13 @@
 							"query": [
 								{ "key": "page", "value": "1" },
 								{ "key": "limit", "value": "20" },
-								{ "key": "postId", "value": "65f3c2a8b1c2d3e4f5g6h7i9", "disabled": true },
 								{ "key": "isDeleted", "value": "false" }
 							]
 						}
 					}
 				},
 				{
-					"name": "Force Delete Comment",
+					"name": "Force Delete Comment (Admin Only)",
 					"request": {
 						"method": "DELETE",
 						"header": [
@@ -722,7 +724,7 @@
 				"bearer": [
 					{
 						"key": "token",
-						"value": "{{token}}",
+						"value": "{{adminToken}}",
 						"type": "string"
 					}
 				]
@@ -732,12 +734,17 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:4000/api/v1",
+			"value": "http://localhost:5000/api/v1",
 			"type": "string"
 		},
 		{
 			"key": "token",
 			"value": "your_jwt_token_here",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "your_admin_jwt_token_here",
 			"type": "string"
 		}
 	]

@@ -30,7 +30,6 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Profile Info
     avatar: {
       type: String,
       default: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
@@ -40,7 +39,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin", "moderator"],
       default: "user",
-      index: true, // KEEP THIS - Don't add schema.index()
+      index: true,
     },
 
     bio: {
@@ -49,7 +48,6 @@ const userSchema = new mongoose.Schema(
       maxLength: [500, "Bio cannot exceed 500 characters"],
     },
 
-    // Social & Verification 
     socialLinks: {
       twitter: { type: String, default: "" },
       github: { type: String, default: "" },
@@ -64,7 +62,7 @@ const userSchema = new mongoose.Schema(
     },
 
     verificationCode: {
-      type: Number,
+      type: String,
       select: false,
     },
 
@@ -73,7 +71,17 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Password Reset 
+    otpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
+    otpAttemptsResetTime: {
+      type: Date,
+      select: false,
+    },
+
     resetPasswordToken: {
       type: String,
       select: false,
@@ -84,7 +92,6 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Account Stats 
     totalPosts: {
       type: Number,
       default: 0,
@@ -115,7 +122,6 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // Account Status
     isActive: {
       type: Boolean,
       default: true,
@@ -161,24 +167,20 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// INDEXES 
 userSchema.index({ email: 1, isVerified: 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ totalPosts: -1 });
 
-// VIRTUALS
 userSchema.virtual("isNewUser").get(function () {
   const daysSinceCreation = (Date.now() - this.createdAt) / (1000 * 60 * 60 * 24);
   return daysSinceCreation < 7;
 });
 
-// PRE-SAVE MIDDLEWARE 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-// Compare password
 userSchema.methods.comparePassword = async function (enteredPassword) {
   try {
     return await bcrypt.compare(enteredPassword, this.password);
@@ -187,46 +189,69 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   }
 };
 
-// Generate verification code
 userSchema.methods.generateVerificationCode = function () {
-  const generateRandomFiveDigitNumber = () => {
-    const firstDigit = Math.floor(Math.random() * 9) + 1;
-    const remainingDigits = Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0");
-    return parseInt(firstDigit + remainingDigits);
-  };
+  const otpLength = parseInt(process.env.OTP_LENGTH || "6");
+  const otpValidityHours = parseInt(process.env.OTP_VALIDITY_HOURS || "12");
+  
+  const verificationCode = Math.floor(
+    Math.pow(10, otpLength - 1) + Math.random() * (Math.pow(10, otpLength) - Math.pow(10, otpLength - 1))
+  ).toString();
 
-  const verificationCode = generateRandomFiveDigitNumber();
   this.verificationCode = verificationCode;
-  this.verificationCodeExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.verificationCodeExpire = Date.now() + otpValidityHours * 60 * 60 * 1000;
+  this.otpAttempts = 0;
+  this.otpAttemptsResetTime = Date.now() + otpValidityHours * 60 * 60 * 1000;
+  
   return verificationCode;
 };
 
-// Generate JWT token
+userSchema.methods.incrementOtpAttempts = function () {
+  const maxAttempts = parseInt(process.env.MAX_OTP_ATTEMPTS || "5");
+  const otpValidityHours = parseInt(process.env.OTP_VALIDITY_HOURS || "12");
+
+  if (!this.otpAttemptsResetTime || Date.now() > this.otpAttemptsResetTime) {
+    this.otpAttempts = 1;
+    this.otpAttemptsResetTime = Date.now() + otpValidityHours * 60 * 60 * 1000;
+  } else {
+    this.otpAttempts += 1;
+  }
+
+  return this.otpAttempts >= maxAttempts;
+};
+
+userSchema.methods.isOtpAttemptLimitExceeded = function () {
+  const maxAttempts = parseInt(process.env.MAX_OTP_ATTEMPTS || "5");
+  
+  if (!this.otpAttemptsResetTime || Date.now() > this.otpAttemptsResetTime) {
+    return false;
+  }
+
+  return this.otpAttempts >= maxAttempts;
+};
+
 userSchema.methods.generateToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
 };
 
-// Generate reset password token
 userSchema.methods.generateResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
   this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
   return resetToken;
 };
 
-// Remove sensitive fields
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
   delete user.verificationCode;
   delete user.verificationCodeExpire;
+  delete user.otpAttempts;
+  delete user.otpAttemptsResetTime;
   delete user.resetPasswordToken;
   delete user.resetPasswordExpire;
   delete user.__v;

@@ -85,10 +85,11 @@ const verifyOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Email and OTP are required.", 400));
   }
 
+  // Select OTP tracking fields for security
   const user = await User.findOne({
     email,
     isVerified: false,
-  }).select("+verificationCode +verificationCodeExpire");
+  }).select("+verificationCode +verificationCodeExpire +otpAttempts +otpAttemptsResetTime");
 
   if (!user) {
     return next(new ErrorHandler("No pending verification found.", 404));
@@ -99,13 +100,44 @@ const verifyOTP = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("OTP expired. Please register again.", 410));
   }
 
+  // Check if OTP attempt limit exceeded
+  if (user.isOtpAttemptLimitExceeded()) {
+    return next(
+      new ErrorHandler(
+        "Too many OTP verification attempts. Please register again and try later.",
+        429
+      )
+    );
+  }
+
   if (user.verificationCode !== Number(otp)) {
-    return next(new ErrorHandler("Invalid OTP.", 400));
+    const isLimitExceeded = user.incrementOtpAttempts();
+    await user.save({ validateModifiedOnly: true });
+
+    if (isLimitExceeded) {
+      return next(
+        new ErrorHandler(
+          "Invalid OTP. Maximum attempts exceeded. Please register again.",
+          429
+        )
+      );
+    }
+
+    const maxAttempts = parseInt(process.env.MAX_OTP_ATTEMPTS || "5");
+    const remainingAttempts = maxAttempts - user.otpAttempts;
+    return next(
+      new ErrorHandler(
+        `Invalid OTP. ${remainingAttempts} attempts remaining.`,
+        400
+      )
+    );
   }
 
   user.isVerified = true;
   user.verificationCode = undefined;
   user.verificationCodeExpire = undefined;
+  user.otpAttempts = undefined;
+  user.otpAttemptsResetTime = undefined;
 
   await user.save({ validateModifiedOnly: true });
 

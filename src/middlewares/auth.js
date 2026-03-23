@@ -50,7 +50,6 @@ const isAuthenticated = catchAsyncError(async (req, res, next) => {
 
 
 // Check if User is Admin
-
 const isAdmin = catchAsyncError(async (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return next(
@@ -64,7 +63,48 @@ const isAdmin = catchAsyncError(async (req, res, next) => {
   next();
 });
 
+
+// Check if User has specific role (Admin, Moderator, etc.)
+const isAuthorized = (roles) => {
+  return catchAsyncError(async (req, res, next) => {
+    if (!req.user) {
+      return next(new ErrorHandler("Please login to access this resource.", 401));
+    }
+
+    // Convert single role to array for flexibility
+    const rolesArray = Array.isArray(roles) ? roles : [roles];
+
+    if (!rolesArray.includes(req.user.role)) {
+      return next(
+        new ErrorHandler(
+          `Access denied. This action requires ${rolesArray.join(" or ")} privileges.`,
+          403
+        )
+      );
+    }
+
+    next();
+  });
+};
+
+
+// Check if User is Moderator or Admin
+const isModerator = catchAsyncError(async (req, res, next) => {
+  if (!req.user || (req.user.role !== "moderator" && req.user.role !== "admin")) {
+    return next(
+      new ErrorHandler(
+        "Access denied. Moderator or Admin privileges required.",
+        403
+      )
+    );
+  }
+
+  next();
+});
+
 module.exports = {
   isAuthenticated,
   isAdmin,
+  isAuthorized,
+  isModerator,
 };

@@ -16,7 +16,7 @@ const {
   deleteAccount,
   toggleFollowUser,
 } = require("../controllers/auth.controller");
-const { isAuthenticated } = require("../middlewares/auth");
+const { isAuthenticated, isAuthorized, isModerator } = require("../middlewares/auth");
 
 const router = express.Router();
 

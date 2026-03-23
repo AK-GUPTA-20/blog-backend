@@ -1,23 +1,23 @@
-
 const getCorsOptions = () => {
-  const frontendUrls = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(",").map(url => url.trim())
-    : ["http://localhost:3000"];
+  // For development - allow all origins
+  if (process.env.NODE_ENV === "development") {
+    return {
+      origin: "*", // Allow all origins in development
+      credentials: false,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      optionsSuccessStatus: 200,
+    };
+  }
 
-  // Additional trusted origins 
+  // For production - strict CORS
   const trustedOrigins = [
-    ...frontendUrls,
-    "https://yourdomain.com",
-    "https://api.yourdomain.com",
-  ];
+    "https://apiv1.tech",
+  ].filter(Boolean);
 
-  const corsOptions = {
+  return {
     origin: (origin, callback) => {
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      if (trustedOrigins.includes(origin)) {
+      if (!origin || trustedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         console.warn(`CORS rejected origin: ${origin}`);
@@ -27,11 +27,9 @@ const getCorsOptions = () => {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    maxAge: 86400, // 24 hours
+    maxAge: 86400,
     optionsSuccessStatus: 200,
   };
-
-  return corsOptions;
 };
 
 module.exports = { getCorsOptions };

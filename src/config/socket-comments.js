@@ -1,13 +1,28 @@
 const jwt = require("jsonwebtoken");
 const Comment = require("../models/Comment.model");
 const Post = require("../models/Post.model");
+const User = require("../models/User.model");
 
-// Store active users in posts
 const activeUsers = new Map();
 const postSubscribers = new Map();
 
+const verifySocketToken = (token) => {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET_KEY);
+  } catch (error) {
+    return null;
+  }
+};
+
+const validateUserPermission = async (userId, resourceId, resourceType = "post") => {
+  const user = await User.findById(userId);
+  if (!user || !user.isVerified) {
+    return false;
+  }
+  return true;
+};
+
 exports.initializeCommentSocket = (io) => {
-  // Middleware to authenticate socket connections
   io.use((socket, next) => {
     const token = socket.handshake.auth.token;
 
@@ -15,59 +30,76 @@ exports.initializeCommentSocket = (io) => {
       return next(new Error("Authentication token required"));
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      socket.userId = decoded.id;
-      socket.userName = socket.handshake.auth.userName;
-      socket.userAvatar = socket.handshake.auth.userAvatar;
-      next();
-    } catch (error) {
-      next(new Error("Invalid token"));
+    const decoded = verifySocketToken(token);
+    if (!decoded) {
+      return next(new Error("Invalid or expired token"));
     }
+
+    socket.userId = decoded.id;
+    socket.userName = socket.handshake.auth.userName;
+    socket.userAvatar = socket.handshake.auth.userAvatar;
+    socket.tokenExpireTime = decoded.exp * 1000;
+    
+    next();
   });
 
-  // Connection handler
   io.on("connection", (socket) => {
     console.log(`✅ User connected: ${socket.userId} - ${socket.id}`);
 
-    // Store user connection
     activeUsers.set(socket.userId, {
       socketId: socket.id,
       userName: socket.userName,
       userAvatar: socket.userAvatar,
     });
 
-    // ==================== COMMENT EVENTS ====================
+    const revalidateToken = () => {
+      if (Date.now() > socket.tokenExpireTime) {
+        socket.emit("token_expired", {
+          error: "Your session has expired. Please login again.",
+        });
+        socket.disconnect(true);
+        return false;
+      }
+      return true;
+    };
 
-    // Subscribe to post comments
-    socket.on("subscribe_post_comments", (data) => {
+    socket.on("subscribe_post_comments", async (data) => {
+      if (!revalidateToken()) return;
+
       const { postId } = data;
       const roomName = `post_comments_${postId}`;
 
-      socket.join(roomName);
+      try {
+        const post = await Post.findById(postId);
+        if (!post) {
+          socket.emit("comment_error", { error: "Post not found" });
+          return;
+        }
 
-      // Track subscribers
-      if (!postSubscribers.has(postId)) {
-        postSubscribers.set(postId, new Set());
+        socket.join(roomName);
+
+        if (!postSubscribers.has(postId)) {
+          postSubscribers.set(postId, new Set());
+        }
+        postSubscribers.get(postId).add(socket.userId);
+
+        const subscriberCount = postSubscribers.get(postId).size;
+
+        console.log(
+          `👤 User ${socket.userId} subscribed to post ${postId} comments (Total: ${subscriberCount})`
+        );
+
+        io.to(roomName).emit("user_joined_comments", {
+          userId: socket.userId,
+          userName: socket.userName,
+          userAvatar: socket.userAvatar,
+          totalSubscribers: subscriberCount,
+        });
+      } catch (error) {
+        socket.emit("comment_error", { error: error.message });
       }
-      postSubscribers.get(postId).add(socket.userId);
-
-      const subscriberCount = postSubscribers.get(postId).size;
-
-      console.log(
-        `👤 User ${socket.userId} subscribed to post ${postId} comments (Total: ${subscriberCount})`
-      );
-
-      // Notify others
-      io.to(roomName).emit("user_joined_comments", {
-        userId: socket.userId,
-        userName: socket.userName,
-        userAvatar: socket.userAvatar,
-        totalSubscribers: subscriberCount,
-      });
     });
 
-    // Unsubscribe from post comments
     socket.on("unsubscribe_post_comments", (data) => {
       const { postId } = data;
       const roomName = `post_comments_${postId}`;
@@ -90,21 +122,29 @@ exports.initializeCommentSocket = (io) => {
       });
     });
 
-    // Send new comment in real-time
     socket.on("send_comment", async (data) => {
+      if (!revalidateToken()) return;
+
       try {
         const { postId, content, parentCommentId } = data;
 
-        // Validate post exists
-        const post = await Post.findById(postId);
-        if (!post) {
-          socket.emit("comment_error", {
-            error: "Post not found",
-          });
+        if (!content || content.trim().length === 0) {
+          socket.emit("comment_error", { error: "Comment content is required" });
           return;
         }
 
-        // Create comment
+        const isPermitted = await validateUserPermission(socket.userId, postId, "post");
+        if (!isPermitted) {
+          socket.emit("comment_error", { error: "You don't have permission to comment" });
+          return;
+        }
+
+        const post = await Post.findById(postId);
+        if (!post) {
+          socket.emit("comment_error", { error: "Post not found" });
+          return;
+        }
+
         let commentData = {
           content,
           author: socket.userId,
@@ -118,13 +158,11 @@ exports.initializeCommentSocket = (io) => {
         const comment = await Comment.create(commentData);
         await comment.populate("author", "name avatar role");
 
-        // Update post comment count
         post.stats.commentsCount += 1;
         await post.save({ validateModifiedOnly: true });
 
         const roomName = `post_comments_${postId}`;
 
-        // Broadcast to all subscribers
         io.to(roomName).emit("new_comment_received", {
           comment: comment.toObject(),
           postId,
@@ -137,27 +175,23 @@ exports.initializeCommentSocket = (io) => {
 
         console.log(`💬 New comment created in post ${postId}`);
       } catch (error) {
-        socket.emit("comment_error", {
-          error: error.message,
-        });
+        socket.emit("comment_error", { error: error.message });
         console.error("Error sending comment:", error.message);
       }
     });
 
-    // Edit comment in real-time
     socket.on("edit_comment", async (data) => {
+      if (!revalidateToken()) return;
+
       try {
         const { commentId, content, postId } = data;
 
         const comment = await Comment.findById(commentId);
         if (!comment || comment.isDeleted) {
-          socket.emit("comment_error", {
-            error: "Comment not found",
-          });
+          socket.emit("comment_error", { error: "Comment not found" });
           return;
         }
 
-        // Check authorization
         if (comment.author.toString() !== socket.userId) {
           socket.emit("comment_error", {
             error: "You are not authorized to edit this comment",
@@ -186,27 +220,23 @@ exports.initializeCommentSocket = (io) => {
 
         console.log(`✏️ Comment ${commentId} updated`);
       } catch (error) {
-        socket.emit("comment_error", {
-          error: error.message,
-        });
+        socket.emit("comment_error", { error: error.message });
         console.error("Error editing comment:", error.message);
       }
     });
 
-    // Delete comment in real-time (user soft delete)
     socket.on("delete_comment", async (data) => {
+      if (!revalidateToken()) return;
+
       try {
         const { commentId, postId } = data;
 
         const comment = await Comment.findById(commentId);
         if (!comment) {
-          socket.emit("comment_error", {
-            error: "Comment not found",
-          });
+          socket.emit("comment_error", { error: "Comment not found" });
           return;
         }
 
-        // Check authorization
         if (comment.author.toString() !== socket.userId) {
           socket.emit("comment_error", {
             error: "You are not authorized to delete this comment",
@@ -214,14 +244,12 @@ exports.initializeCommentSocket = (io) => {
           return;
         }
 
-        // Soft delete
         comment.isDeleted = true;
         comment.content = "[deleted]";
         comment.deletedAt = new Date();
         comment.deletedBy = socket.userId;
         await comment.save({ validateModifiedOnly: true });
 
-        // Update post comment count
         const post = await Post.findById(postId);
         if (post) {
           post.stats.commentsCount = Math.max(0, post.stats.commentsCount - 1);
@@ -242,23 +270,18 @@ exports.initializeCommentSocket = (io) => {
 
         console.log(`🗑️ Comment ${commentId} deleted (soft delete)`);
       } catch (error) {
-        socket.emit("comment_error", {
-          error: error.message,
-        });
+        socket.emit("comment_error", { error: error.message });
         console.error("Error deleting comment:", error.message);
       }
     });
 
-    // Admin force delete comment
     socket.on("admin_force_delete_comment", async (data) => {
+      if (!revalidateToken()) return;
+
       try {
         const { commentId, postId, reason } = data;
 
-        // Check if user is admin
-        const Comment_Model = require("../models/Comment.model");
-        const User_Model = require("../models/User.model");
-
-        const user = await User_Model.findById(socket.userId);
+        const user = await User.findById(socket.userId);
         if (!user || user.role !== "admin") {
           socket.emit("comment_error", {
             error: "Only admin can force delete comments",
@@ -266,21 +289,15 @@ exports.initializeCommentSocket = (io) => {
           return;
         }
 
-        const comment = await Comment_Model.findById(commentId);
+        const comment = await Comment.findById(commentId);
         if (!comment) {
-          socket.emit("comment_error", {
-            error: "Comment not found",
-          });
+          socket.emit("comment_error", { error: "Comment not found" });
           return;
         }
 
-        // Store post info before deletion
         const postIdToUpdate = comment.post;
+        await Comment.findByIdAndDelete(commentId);
 
-        // Force delete
-        await Comment_Model.findByIdAndDelete(commentId);
-
-        // Update post comment count
         const post = await Post.findById(postIdToUpdate);
         if (post) {
           post.stats.commentsCount = Math.max(0, post.stats.commentsCount - 1);
@@ -303,23 +320,20 @@ exports.initializeCommentSocket = (io) => {
 
         console.log(`🔨 Comment ${commentId} force deleted by admin`);
       } catch (error) {
-        socket.emit("comment_error", {
-          error: error.message,
-        });
+        socket.emit("comment_error", { error: error.message });
         console.error("Error force deleting comment:", error.message);
       }
     });
 
-    // Like comment in real-time
     socket.on("like_comment", async (data) => {
+      if (!revalidateToken()) return;
+
       try {
         const { commentId, postId } = data;
 
         const comment = await Comment.findById(commentId);
         if (!comment || comment.isDeleted) {
-          socket.emit("comment_error", {
-            error: "Comment not found",
-          });
+          socket.emit("comment_error", { error: "Comment not found" });
           return;
         }
 
@@ -349,15 +363,14 @@ exports.initializeCommentSocket = (io) => {
           `❤️ Comment ${commentId} ${isLiked ? "unliked" : "liked"} by user ${socket.userId}`
         );
       } catch (error) {
-        socket.emit("comment_error", {
-          error: error.message,
-        });
+        socket.emit("comment_error", { error: error.message });
         console.error("Error liking comment:", error.message);
       }
     });
 
-    // User typing indicator
     socket.on("user_typing_comment", (data) => {
+      if (!revalidateToken()) return;
+
       const { postId } = data;
       const roomName = `post_comments_${postId}`;
 
@@ -368,7 +381,6 @@ exports.initializeCommentSocket = (io) => {
       });
     });
 
-    // User stopped typing
     socket.on("user_stop_typing_comment", (data) => {
       const { postId } = data;
       const roomName = `post_comments_${postId}`;
@@ -378,13 +390,10 @@ exports.initializeCommentSocket = (io) => {
       });
     });
 
-    // ==================== DISCONNECT ====================
-
     socket.on("disconnect", () => {
       console.log(`❌ User disconnected: ${socket.userId}`);
       activeUsers.delete(socket.userId);
 
-      // Remove from all post subscribers
       postSubscribers.forEach((subscribers, postId) => {
         if (subscribers.has(socket.userId)) {
           subscribers.delete(socket.userId);
@@ -397,14 +406,12 @@ exports.initializeCommentSocket = (io) => {
       });
     });
 
-    // Error handler
     socket.on("error", (error) => {
       console.error(`⚠️ Socket error for user ${socket.userId}:`, error);
     });
   });
 };
 
-// Helper function to get active users in a post
 exports.getActiveUsersInPost = (postId) => {
   return postSubscribers.get(postId)?.size || 0;
 };

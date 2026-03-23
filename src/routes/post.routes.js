@@ -1,5 +1,5 @@
 const express = require("express");
-const { isAuthenticated } = require("../middlewares/auth");
+const { isAuthenticated, isAuthorized } = require("../middlewares/auth");
 
 const {
   createPost,
@@ -42,6 +42,10 @@ router.put("/:id", isAuthenticated, updatePost);
 router.delete("/:id", isAuthenticated, deletePost);
 router.post("/:id/like", isAuthenticated, toggleLikePost);
 router.post("/:id/save", isAuthenticated, toggleSavePost);
-router.post("/admin/publish-scheduled", isAuthenticated, publishScheduledPosts); // Admin: Publish scheduled posts
+
+// ==================== ADMIN ONLY ROUTES ====================
+
+// Admin: Publish scheduled posts
+router.post("/admin/publish-scheduled", isAuthenticated, isAuthorized("admin"), publishScheduledPosts);
 
 module.exports = router;
