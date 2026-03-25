@@ -3,7 +3,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
-const csrf = require("csurf");
 const morgan = require("morgan");
 
 const ErrorHandler = require("./middlewares/error");
@@ -52,13 +51,7 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  },
-});
+
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -82,9 +75,9 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/api/v1/auth", authLimiter, otpLimiter, csrfProtection, authRoutes);
-app.use("/api/v1/posts", csrfProtection, postRoutes);
-app.use("/api/v1/comments", csrfProtection, commentRoutes);
+app.use("/api/v1/auth", authLimiter, otpLimiter,  authRoutes);
+app.use("/api/v1/posts", postRoutes);
+app.use("/api/v1/comments", commentRoutes);
 
 app.use((req, res, next) => {
   next(new ErrorHandler(`Route ${req.originalUrl} not found`, 404));

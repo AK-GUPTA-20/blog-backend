@@ -359,7 +359,6 @@ const socket = io("https://apiv1.tech", {
 
 - **Helmet** — Sets secure HTTP headers
 - **CORS** — Wildcard in development, strict allowlist in production
-- **CSRF** — `csurf` middleware on all mutation routes
 - **Rate Limiting:**
   - Global: 100 req / 15 min
   - Auth routes: 20 req / 15 min
