@@ -110,7 +110,7 @@ const verifyOTP = catchAsyncError(async (req, res, next) => {
     );
   }
 
-  if (user.verificationCode !== Number(otp)) {
+  if (String(user.verificationCode) !== String(otp)) {
     const isLimitExceeded = user.incrementOtpAttempts();
     await user.save({ validateModifiedOnly: true });
 
