@@ -13,6 +13,8 @@ const getCorsOptions = () => {
   // For production - strict CORS
   const trustedOrigins = [
     "https://apiv1.tech",
+    "http://localhost:5175",
+    "http://localhost:5173",
   ].filter(Boolean);
 
   return {
