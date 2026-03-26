@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
 
     avatar: {
       type: String,
-      default: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+      default: "",
     },
 
     role: {
@@ -46,6 +46,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
       maxLength: [500, "Bio cannot exceed 500 characters"],
+    },
+
+    gender: {
+      type: String,
+      enum: {
+        values: ["male", "female"],
+        message: "Gender must be either male or female",
+      },
+      required: [true, "Gender is required"],
     },
 
     socialLinks: {
@@ -245,8 +254,16 @@ userSchema.methods.generateResetPasswordToken = function () {
   return resetToken;
 };
 
+
 userSchema.methods.toJSON = function () {
+  const generateAvatar = require("../utils/generateAvatar");
   const user = this.toObject();
+  
+  // Ensure avatar is always generated based on gender if empty
+  if (!user.avatar || user.avatar.trim() === "") {
+    user.avatar = generateAvatar(user.gender);
+  }
+  
   delete user.password;
   delete user.verificationCode;
   delete user.verificationCodeExpire;

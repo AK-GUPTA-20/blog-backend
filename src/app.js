@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 const morgan = require("morgan");
 
 const ErrorHandler = require("./middlewares/error");
@@ -22,7 +23,7 @@ app.use(cors(getCorsOptions()));
 // RATE LIMITERS
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -30,7 +31,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 200,
   message: "Too many authentication attempts, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -42,7 +43,7 @@ const otpLimiter = rateLimit({
   message: "Too many OTP verification attempts. Please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.body.email || req.ip,
+  keyGenerator: (req) => req.body.email ? String(req.body.email).toLowerCase() : ipKeyGenerator(req),
   skip: (req) => req.method !== "POST" || !req.path.includes("verify-otp"),
 });
 

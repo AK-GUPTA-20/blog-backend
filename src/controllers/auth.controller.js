@@ -5,6 +5,7 @@ const sendToken = require("../utils/sendToken");
 const sendEmail = require("../utils/sendEmail");
 const generateEmailTemplate = require("../utils/generateEmailTemplate");
 const { imagekit } = require("../config/ImageKit.upload");
+const generateAvatar = require("../utils/generateAvatar");
 const crypto = require("crypto");
 
 //* HELPER FUNCTIONS
@@ -37,11 +38,18 @@ const sendVerificationCode = async (id, verificationCode, email, res) => {
 //* REGISTRATION
 
 const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, password, avatar, bio } = req.body;
+  const { name, email, password, avatar, bio, gender } = req.body;
 
   // Validation
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !gender) {
     return next(new ErrorHandler("All fields are required.", 400));
+  }
+
+  // Normalize gender to lowercase
+  const normalizedGender = String(gender).toLowerCase().trim();
+
+  if (!['male', 'female'].includes(normalizedGender)) {
+    return next(new ErrorHandler("Gender must be either male or female.", 400));
   }
 
   if (password.length < 8 || password.length > 32) {
@@ -61,12 +69,17 @@ const register = catchAsyncError(async (req, res, next) => {
     }
   }
 
-  // Create user
+  // Create user with generated avatar based on gender
+  const generatedAvatar = !avatar || avatar.trim() === "" 
+    ? generateAvatar(normalizedGender) 
+    : avatar;
+
   const user = await User.create({
     name,
     email,
     password,
-    avatar: avatar || undefined,
+    gender: normalizedGender,
+    avatar: generatedAvatar,
     bio: bio || "",
   });
 
