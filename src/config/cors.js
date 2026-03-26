@@ -15,6 +15,7 @@ const getCorsOptions = () => {
     "https://apiv1.tech",
     "http://localhost:5175",
     "http://localhost:5173",
+    "https://blog-frontend-weld-kappa.vercel.app",
   ].filter(Boolean);
 
   return {
