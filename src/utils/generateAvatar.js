@@ -2,11 +2,6 @@
 const generateAvatar = (gender) => {
   const seed = Math.random().toString(36).substring(2, 15);
 
-  // DiceBear v9.x avatar styles with clear gender differentiation
-  // "avataaars" - has diverse options
-  // "croodles" - has gender variations
-  // "big-smile" - gender-aware style
-  // Using distinct styles for better visual differentiation
   let style;
   
   if (gender === "female") {

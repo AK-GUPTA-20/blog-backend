@@ -3,10 +3,18 @@ const catchAsyncError = require("./catchAsyncError");
 const ErrorHandler = require("./error");
 const User = require("../models/User.model");
 
-
 // Check if User is Authenticated
 const isAuthenticated = catchAsyncError(async (req, res, next) => {
-  const { token } = req.cookies;
+  let token = null;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7); // Remove "Bearer " prefix
+  }
+
+  if (!token) {
+    token = req.cookies?.token;
+  }
 
   if (!token) {
     return next(
@@ -34,7 +42,6 @@ const isAuthenticated = catchAsyncError(async (req, res, next) => {
       );
     }
 
-    // Attach user to request
     req.user = user;
 
     next();
@@ -48,8 +55,6 @@ const isAuthenticated = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
-// Check if User is Admin
 const isAdmin = catchAsyncError(async (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return next(
@@ -63,15 +68,12 @@ const isAdmin = catchAsyncError(async (req, res, next) => {
   next();
 });
 
-
-// Check if User has specific role (Admin, Moderator, etc.)
 const isAuthorized = (roles) => {
   return catchAsyncError(async (req, res, next) => {
     if (!req.user) {
       return next(new ErrorHandler("Please login to access this resource.", 401));
     }
 
-    // Convert single role to array for flexibility
     const rolesArray = Array.isArray(roles) ? roles : [roles];
 
     if (!rolesArray.includes(req.user.role)) {
@@ -87,8 +89,6 @@ const isAuthorized = (roles) => {
   });
 };
 
-
-// Check if User is Moderator or Admin
 const isModerator = catchAsyncError(async (req, res, next) => {
   if (!req.user || (req.user.role !== "moderator" && req.user.role !== "admin")) {
     return next(
