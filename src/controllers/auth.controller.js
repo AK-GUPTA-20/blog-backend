@@ -35,6 +35,8 @@ const sendVerificationCode = async (id, verificationCode, email, res) => {
   }
 };
 
+//* ==================== AUTHENTICATION ROUTES ====================
+
 //* REGISTRATION
 
 const register = catchAsyncError(async (req, res, next) => {
@@ -156,7 +158,6 @@ const verifyOTP = catchAsyncError(async (req, res, next) => {
 
   return sendToken(user, 200, "Account verified successfully.", res);
 });
-
 
 //* RESEND OTP
 
@@ -475,7 +476,6 @@ const forgotPassword = catchAsyncError(async (req, res, next) => {
   }
 });
 
-
 //* RESET PASSWORD 
 
 const resetPassword = catchAsyncError(async (req, res, next) => {
@@ -607,6 +607,65 @@ const toggleFollowUser = catchAsyncError(async (req, res, next) => {
   });
 });
 
+
+//*  API GET ALL AUTHORS with full details (PUBLIC)
+
+const getAllAuthors = catchAsyncError(async (req, res, next) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // Get total count
+  const total = await User.countDocuments({ 
+    isActive: true, 
+    isVerified: true,
+    totalPosts: { $gt: 0 } // Only users who have posted
+  });
+
+  // Get authors sorted by total posts (most prolific first)
+  const authors = await User.find({ 
+    isActive: true, 
+    isVerified: true,
+    totalPosts: { $gt: 0 }
+  })
+    .select("name email avatar bio totalPosts totalFollowers createdAt")
+    .sort({ totalPosts: -1, totalFollowers: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  res.status(200).json({
+    success: true,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    limit,
+    data: authors,
+  });
+});
+
+//* GET TOP AUTHORS (PUBLIC)
+
+const getTopAuthors = catchAsyncError(async (req, res, next) => {
+  const limit =  5;
+
+  const authors = await User.find({ 
+    isActive: true, 
+    isVerified: true,
+    totalPosts: { $gt: 0 }
+  })
+    .select("name avatar totalPosts totalFollowers")
+    .sort({ totalFollowers: -1, totalPosts: -1 })
+    .limit(limit)
+    .lean();
+
+  res.status(200).json({
+    success: true,
+    count: authors.length,
+    data: authors,
+  });
+});
+
 module.exports = {
   register,
   verifyOTP,
@@ -622,4 +681,6 @@ module.exports = {
   resetPassword,
   deleteAccount,
   toggleFollowUser,
+  getAllAuthors,
+  getTopAuthors,
 };

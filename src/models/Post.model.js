@@ -188,6 +188,7 @@ postSchema.index({ author: 1, createdAt: -1 });
 postSchema.index({ author: 1, status: 1 });
 postSchema.index({ tags: 1 });
 postSchema.index({ isFeatured: 1, publishedAt: -1 });
+postSchema.index({ slug: 1, status: 1 });
 
 // ==================== VIRTUALS ====================
 postSchema.virtual("commentCount").get(function () {

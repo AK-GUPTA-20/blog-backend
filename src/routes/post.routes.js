@@ -7,6 +7,7 @@ const {
   getSinglePost,
   getTopPosts,
   getMyPosts,
+  getMySavedPosts,
   getPostsByCategory,
   getPostsByAuthor,
   getPostsByTag,
@@ -32,12 +33,11 @@ router.get("/category/:category", getPostsByCategory);
 router.get("/author/:authorId", getPostsByAuthor);
 router.get("/tag/:tag", getPostsByTag);
 
-
-
 // ==================== PROTECTED ROUTES ====================
 
 router.post("/create", isAuthenticated, createPost);
 router.get("/me/posts", isAuthenticated, getMyPosts);
+router.get("/me/saved", isAuthenticated, getMySavedPosts);
 router.put("/:id", isAuthenticated, updatePost);
 router.delete("/:id", isAuthenticated, deletePost);
 router.post("/:id/like", isAuthenticated, toggleLikePost);

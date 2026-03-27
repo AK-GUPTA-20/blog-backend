@@ -4,13 +4,11 @@ const ErrorHandler = require("../middlewares/error");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const slugify = require("slugify");
 
-
 // HELPER FUNCTION 
 const calculateReadingTime = (content) => {
   const wordCount = content.trim().split(/\s+/).length;
   return Math.ceil(wordCount / 200);
 };
-
 
 //* CREATE POST 
 exports.createPost = catchAsyncError(async (req, res, next) => {
@@ -131,7 +129,8 @@ exports.getAllPosts = catchAsyncError(async (req, res, next) => {
     .sort(sortOption)
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -143,7 +142,7 @@ exports.getAllPosts = catchAsyncError(async (req, res, next) => {
   });
 });
 
-//* GET SINGLE POST 
+//* GET SINGLE POST - OPTIMIZED FOR SPEED WITH VIEW TRACKING 
 exports.getSinglePost = catchAsyncError(async (req, res, next) => {
   const { slug } = req.params;
 
@@ -156,8 +155,7 @@ exports.getSinglePost = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler("Post not found.", 404));
   }
 
-  // Increment views
-  post.stats.views += 1;
+  post.stats.views = (post.stats.views || 0) + 1;
 
   if (req.user) {
     post.viewsHistory.push({
@@ -170,14 +168,16 @@ exports.getSinglePost = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    message: "Post fetched successfully",
     data: post,
+    views: post.stats.views,
   });
 });
 
 //* GET TOP POSTS
 exports.getTopPosts = catchAsyncError(async (req, res, next) => {
   const limit = Number(req.query.limit) || 5;
-  const timeframe = req.query.timeframe || "month"; // week, month, all
+  const timeframe = req.query.timeframe || "month";
 
   let dateFilter = {};
   const now = new Date();
@@ -192,7 +192,8 @@ exports.getTopPosts = catchAsyncError(async (req, res, next) => {
     .sort({ "stats.views": -1 })
     .limit(limit)
     .populate("author", "name avatar")
-    .select("title slug stats.views author createdAt");
+    .select("title slug stats.views author createdAt")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -227,7 +228,51 @@ exports.getMyPosts = catchAsyncError(async (req, res, next) => {
     .sort(sortOption)
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
+
+  res.status(200).json({
+    success: true,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    limit,
+    data: posts,
+  });
+});
+
+//* GET MY SAVED POSTS
+exports.getMySavedPosts = catchAsyncError(async (req, res, next) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const { sort } = req.query;
+
+  let sortOption = { createdAt: -1 };
+
+  if (sort === "views") {
+    sortOption = { "stats.views": -1 };
+  } else if (sort === "likes") {
+    sortOption = { "stats.likes": -1 };
+  } else if (sort === "newest") {
+    sortOption = { publishedAt: -1 };
+  }
+
+  const total = await Post.countDocuments({ 
+    savedBy: req.user.id,
+    status: "published"
+  });
+
+  const posts = await Post.find({ 
+    savedBy: req.user.id,
+    status: "published"
+  })
+    .populate("author", "name avatar bio")
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -270,7 +315,8 @@ exports.getPostsByCategory = catchAsyncError(async (req, res, next) => {
     .sort({ publishedAt: -1 })
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -289,7 +335,7 @@ exports.getPostsByAuthor = catchAsyncError(async (req, res, next) => {
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const author = await User.findById(authorId);
+  const author = await User.findById(authorId).lean();
   if (!author) {
     return next(new ErrorHandler("Author not found.", 404));
   }
@@ -301,14 +347,15 @@ exports.getPostsByAuthor = catchAsyncError(async (req, res, next) => {
     .sort({ publishedAt: -1 })
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
     total,
     page,
     pages: Math.ceil(total / limit),
-    author: author.toJSON(),
+    author: author,
     data: posts,
   });
 });
@@ -327,7 +374,8 @@ exports.getPostsByTag = catchAsyncError(async (req, res, next) => {
     .sort({ publishedAt: -1 })
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -491,7 +539,8 @@ exports.getFeaturedPosts = catchAsyncError(async (req, res, next) => {
     .sort({ publishedAt: -1 })
     .limit(limit)
     .populate("author", "name avatar")
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -524,7 +573,8 @@ exports.searchPosts = catchAsyncError(async (req, res, next) => {
     .populate("author", "name avatar")
     .skip(skip)
     .limit(limit)
-    .select("-__v");
+    .select("-__v -viewsHistory -likedBy -savedBy")
+    .lean();
 
   res.status(200).json({
     success: true,
