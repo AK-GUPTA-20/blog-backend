@@ -654,7 +654,7 @@ const getTopAuthors = catchAsyncError(async (req, res, next) => {
     isVerified: true,
     totalPosts: { $gt: 0 }
   })
-    .select("name avatar totalPosts totalFollowers")
+    .select("name avatar totalPosts totalFollowers bio")
     .sort({ totalFollowers: -1, totalPosts: -1 })
     .limit(limit)
     .lean();
