@@ -192,7 +192,7 @@ exports.getTopPosts = catchAsyncError(async (req, res, next) => {
     .sort({ "stats.views": -1 })
     .limit(limit)
     .populate("author", "name avatar")
-    .select("title slug stats tags author createdAt")
+    .select("title slug stats tags author category createdAt")
     .lean();
 
   res.status(200).json({

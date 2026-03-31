@@ -6,8 +6,20 @@ require("dotenv").config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Nodemailer (Gmail)
-const sendMailWithNodemailer = async (to, subject, html) => {
+const sendMailWithNodemailer = async (options) => {
   try {
+    let to, subject, html, text;
+    if (typeof options === "object") {
+      to = options.email || options.to;
+      subject = options.subject;
+      html = options.html;
+      text = options.message || options.text;
+    } else {
+      to = options;
+      subject = arguments[1];
+      html = arguments[2];
+    }
+    
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: { 
@@ -21,6 +33,7 @@ const sendMailWithNodemailer = async (to, subject, html) => {
       to,
       subject,
       html,
+      text,
     });
 
     return result;
@@ -33,19 +46,20 @@ const sendMailWithNodemailer = async (to, subject, html) => {
 // Resend (your domain)
 const sendMailWithResend = async (toOrObject, subject, html) => {
   try {
-    let email, emailSubject, emailHtml;
+    let email, emailSubject, emailHtml, emailText;
 
     if (typeof toOrObject === "object") {
-      email = toOrObject.email;
+      email = toOrObject.email || toOrObject.to;
       emailSubject = toOrObject.subject;
       emailHtml = toOrObject.html;
+      emailText = toOrObject.message || toOrObject.text;
     } else {
       email = toOrObject;
       emailSubject = subject;
       emailHtml = html;
     }
 
-    if (!email || !emailSubject || !emailHtml) {
+    if (!email || !emailSubject || (!emailHtml && !emailText)) {
       throw new Error("Missing fields");
     }
 
@@ -54,6 +68,7 @@ const sendMailWithResend = async (toOrObject, subject, html) => {
       to: email,
       subject: emailSubject,
       html: emailHtml,
+      text: emailText,
     });
 
     return response;
